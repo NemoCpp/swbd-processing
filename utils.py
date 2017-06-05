@@ -55,17 +55,54 @@ def raw_speaker_times(audio_path, trans_path):
     return out
 
 raw = raw_speaker_times('cd01/swb1', 'phase1/disc01')
+# print raw
 
-# for sid, desc in out.iteritems():
-#     fid,start,end = desc
-def chunk_times(durations):
+def chunk_times(durations, chop_time=4):
     """
     input: list of tuples of (file id, start time, end time)
     output: new list tuples that breaks speaker durations into short snippets, between 2 and 8 seconds long
     """
     out = []
-    for fid,start,end in durations:
-        out.append(fid)
-    print out
+    for duration in durations:
+        fid,start,end = duration
+        try:
+            s=float(start)
+            e=float(end)
+        except ValueError:
+            continue
+        dur = e-s
+        if dur > 2 and dur < 8:
+            out.append((fid,s,e))
+        if dur > 8:
+            # TODO make times variable, not all chop_time
+            # use a while loop, until the value is > end
+            for i in xrange(int(dur/chop_time) - 1):
+                out.append((fid,s+i*chop_time,s+(i+1)*chop_time))
+    return out
 
-chunk_times(raw['1122'])
+def desc2nppath(desc):
+    """
+    Given a description, of (file id, start time, end time), where times are in seconds,
+    compute the corresponding np array for that audio snippet, write it to a file, and
+    return the corresponding path string of that np snippet file.
+    """
+    return str(desc)
+
+def poop(raw):
+    out={}
+    for sid, descs in raw.iteritems():
+        # fid,start,end = desc
+        out[sid] = chunk_times(descs)
+
+    entries = []
+    for sid, descs in out.iteritems():
+        for desc in descs:
+            entry = '\t'.join([str(sid),desc2nppath(desc)])
+            entries.append(entry)
+    with open('catalog', 'w') as text_file:
+        text_file.write('\n'.join(entries))
+
+    return out
+
+poop(raw)
+
