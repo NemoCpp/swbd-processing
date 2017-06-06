@@ -96,7 +96,7 @@ def desc2nppath(segment_num, desc):
     speech_file_name = 'cd01/swb1/sw0' + file_id + '.sph'
     
     # rate, sig = wav.read(speech_file_name)
-    sig, rate, _ = frontend.io.read_sph(speech_file_name)
+    sig, rate, _ = frontend.io.read_sph(speech_file_name, 'f')
     mfcc_feat = np.array(mfcc(sig, rate, winlen=WIN_LEN, winstep=WIN_LEN))
     start_index = int(start / WIN_LEN)
     end_index = int(end / WIN_LEN)
@@ -112,10 +112,13 @@ def poop(raw):
         out[sid] = chunk_times(descs)
 
     entries = []
+    counter = 0
     for sid, descs in out.iteritems():
-        for i, desc in enumerate(descs):
-            entry = '\t'.join([str(sid),desc2nppath(i, desc)])
+        for desc in descs:
+            entry = '\t'.join([str(sid),desc2nppath(counter, desc)])
             entries.append(entry)
+            counter += 1
+
     with open('catalog', 'w') as text_file:
         text_file.write('\n'.join(entries))
 
