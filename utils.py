@@ -2,7 +2,9 @@ import os
 import re
 from collections import defaultdict
 from python_speech_features import mfcc
+from sidekit import frontend
 import scipy.io.wavfile as wav
+import numpy as np
 
 WIN_LEN = 0.125
 
@@ -91,10 +93,11 @@ def desc2nppath(segment_num, desc):
     return the corresponding path string of that np snippet file.
     """
     file_id, start, end = desc
-    speech_file_name = 'cd01/swb1/sw0' + file_id + '.wav'
-    print speech_file_name
-    rate, sig = wav.read(speech_file_name)
-    mfcc_feat = np.array(mfcc(sig, rate, winlen=WIN_LEN, winstep=WIN_LEN)) 
+    speech_file_name = 'cd01/swb1/sw0' + file_id + '.sph'
+    
+    # rate, sig = wav.read(speech_file_name)
+    sig, rate, _ = frontend.io.read_sph(speech_file_name)
+    mfcc_feat = np.array(mfcc(sig, rate, winlen=WIN_LEN, winstep=WIN_LEN))
     start_index = int(start / WIN_LEN)
     end_index = int(end / WIN_LEN)
 
