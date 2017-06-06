@@ -90,14 +90,16 @@ def desc2nppath(segment_num, desc):
     compute the corresponding np array for that audio snippet, write it to a file, and
     return the corresponding path string of that np snippet file.
     """
-    file_id, start, end = desc 
+    file_id, start, end = desc
     speech_file_name = 'cd01/swb1/sw0' + file_id + '.wav'
     print speech_file_name
     rate, sig = wav.read(speech_file_name)
     mfcc_feat = np.array(mfcc(sig, rate, winlen=WIN_LEN, winstep=WIN_LEN)) 
-    
+    start_index = int(start / WIN_LEN)
+    end_index = int(end / WIN_LEN)
+
     output_file = 'features/' + file_id + '_' + str(segment_num) + '.npy'
-    mfcc_feat.dump(output_file)
+    mfcc_feat[start_index : end_index].dump(output_file)
     return output_file
 
 def poop(raw):
