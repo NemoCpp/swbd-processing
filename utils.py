@@ -8,6 +8,8 @@ import numpy as np
 
 WIN_LEN = 0.125
 
+mfcc_cache = {}
+
 def extension(fname, ext):
     return fname.lower().endswith(ext)
 
@@ -86,7 +88,7 @@ def chunk_times(durations, chop_time=4):
                 out.append((fid,s+i*chop_time,s+(i+1)*chop_time))
     return out
 
-def desc2nppath(segment_num, desc):
+def desc2nppath(sid, sid_count, desc):
     """
     Given a description, of (file id, start time, end time), where times are in seconds,
     compute the corresponding np array for that audio snippet, write it to a file, and
@@ -96,14 +98,24 @@ def desc2nppath(segment_num, desc):
     speech_file_name = 'cd01/swb1/sw0' + file_id + '.sph'
     
     # rate, sig = wav.read(speech_file_name)
-    sig, rate, _ = frontend.io.read_sph(speech_file_name, 'f')
-    mfcc_feat = np.array(mfcc(sig, rate, winlen=WIN_LEN, winstep=WIN_LEN))
+    if speech_file_name not in mfcc_cache:
+        sig, rate, _ = frontend.io.read_sph(speech_file_name, 'f')
+        mfcc_feat = np.array(mfcc(sig, rate, winlen=WIN_LEN, winstep=WIN_LEN))
+        mfcc_cache[speech_file_name] = mfcc_feat
+    else:
+        mfcc_feat = mfcc_cache[speech_file_name] 
+
     start_index = int(start / WIN_LEN)
     end_index = int(end / WIN_LEN)
 
-    output_file = 'features/' + file_id + '_' + str(segment_num) + '.npy'
-    mfcc_feat[start_index : end_index].dump(output_file)
-    return output_file
+    output_file = 'vecs/' + sid + '_' + str(sid_count) + '.npy'
+    mfcc_seg = mfcc_feat[start_index : end_index]
+    segment_length = mfcc_seg.shape[0]
+    if segment_length < 64:
+        mfcc_seg = np.pad(mfcc_seg, (0, 64 - segment_length), 'constant')
+
+    mfcc_seg.dump(output_file)
+    return output_file, str(segment_length)
 
 def poop(raw):
     out={}
@@ -112,17 +124,19 @@ def poop(raw):
         out[sid] = chunk_times(descs)
 
     entries = []
-    counter = 0
+    
+    sid_counts = defaultdict(int)
     for sid, descs in out.iteritems():
         for desc in descs:
-            entry = '\t'.join([str(sid),desc2nppath(counter, desc)])
+            sid_count = sid_counts[sid]
+            output_file, seg_length = desc2nppath(str(sid), sid_count, desc)
+            entry = ' '.join([str(sid), output_file, seg_length])
+            sid_counts[sid] += 1
             entries.append(entry)
-            counter += 1
 
-    with open('catalog', 'w') as text_file:
+    with open('vecs.txt', 'w') as text_file:
         text_file.write('\n'.join(entries))
 
     return out
 
 poop(raw)
-

@@ -1,3 +1,6 @@
 cd01/
 phase1
 *swp
+vecs/
+*.txt
+*.zip
