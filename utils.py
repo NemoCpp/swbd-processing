@@ -110,11 +110,11 @@ def desc2nppath(sid, sid_count, desc):
 
     output_file = 'vecs/' + sid + '_' + str(sid_count) + '.npy'
     mfcc_seg = mfcc_feat[start_index : end_index]
+    padded = np.zeros((64, 13))
     segment_length = mfcc_seg.shape[0]
-    if segment_length < 64:
-        mfcc_seg = np.pad(mfcc_seg, (0, 64 - segment_length), 'constant')
+    padded[ : segment_length, : ] = mfcc_seg
 
-    mfcc_seg.dump(output_file)
+    padded.dump(output_file)
     return output_file, str(segment_length)
 
 def poop(raw):
