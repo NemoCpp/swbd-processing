@@ -1,7 +1,7 @@
 import os
 import re
 from collections import defaultdict
-from python_speech_features import mfcc
+from python_speech_features import mfcc, logfbank
 from sidekit import frontend
 import scipy.io.wavfile as wav
 import numpy as np
@@ -9,6 +9,7 @@ import numpy as np
 WIN_LEN = 0.125
 
 mfcc_cache = {}
+fbank_cache = {}
 
 def extension(fname, ext):
     return fname.lower().endswith(ext)
@@ -100,22 +101,28 @@ def desc2nppath(sid, sid_count, desc):
     # rate, sig = wav.read(speech_file_name)
     if speech_file_name not in mfcc_cache:
         sig, rate, _ = frontend.io.read_sph(speech_file_name, 'f')
+        sig = np.divide(sig, np.linalg.norm(sig, axis=0))
         mfcc_feat = np.array(mfcc(sig, rate, winlen=WIN_LEN, winstep=WIN_LEN))
+        fbank_feat = np.array(logfbank(sig, rate, winlen=WIN_LEN, winstep=WIN_LEN))
         mfcc_cache[speech_file_name] = mfcc_feat
+        fbank_cache[speech_file_name] = fbank_feat 
     else:
         mfcc_feat = mfcc_cache[speech_file_name] 
+        fbank_feat = fbank_cache[speech_file_name] 
 
     start_index = int(start / WIN_LEN)
     end_index = int(end / WIN_LEN)
 
     output_file = 'vecs/' + sid + '_' + str(sid_count) + '.npy'
     mfcc_seg = mfcc_feat[start_index : end_index]
-    padded = np.zeros((64, 13))
+    fbank_seg = fbank_feat[start_index : end_index]
+    padded = np.zeros((64, 39))
     segment_length = mfcc_seg.shape[0]
-    padded[ : segment_length, : ] = mfcc_seg
+    padded[ : segment_length, 0 : 13 ] = mfcc_seg
+    padded[ : segment_length, 13 : ] = fbank_seg 
 
     padded.dump(output_file)
-    return output_file, str(segment_length)
+    return output_file.split('/')[1], str(segment_length)
 
 def poop(raw):
     out={}
@@ -134,7 +141,7 @@ def poop(raw):
             sid_counts[sid] += 1
             entries.append(entry)
 
-    with open('vecs.txt', 'w') as text_file:
+    with open('vecs/vecs.txt', 'w') as text_file:
         text_file.write('\n'.join(entries))
 
     return out
