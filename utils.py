@@ -101,7 +101,8 @@ def desc2nppath(sid, sid_count, desc):
     # rate, sig = wav.read(speech_file_name)
     if speech_file_name not in mfcc_cache:
         sig, rate, _ = frontend.io.read_sph(speech_file_name, 'f')
-        sig = np.divide(sig, np.linalg.norm(sig, axis=0))
+        rms = np.sqrt(np.mean(np.square(sig), axis=0))
+        sig = np.divide(sig, rms)
         mfcc_feat = np.array(mfcc(sig, rate, winlen=WIN_LEN, winstep=WIN_LEN))
         fbank_feat = np.array(logfbank(sig, rate, winlen=WIN_LEN, winstep=WIN_LEN))
         mfcc_cache[speech_file_name] = mfcc_feat
