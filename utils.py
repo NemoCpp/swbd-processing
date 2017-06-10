@@ -42,7 +42,10 @@ def raw_speaker_times(audio_path, trans_path):
     for fid in list(common):
         with open(os.path.join(trans_path, 'sw'+fid+'.txt'), 'r') as txtf:
             firstline = txtf.readline().strip()
-            _,A,B = firstline.split('\t')[1].split('_')
+            splits =  firstline.split('\t')
+            if len(splits) < 2:
+                continue
+            _,A,B = splits[1].split('_')
         convos[fid] = {'A': A, 'B': B}
         # print fid,A,B
 
@@ -53,12 +56,15 @@ def raw_speaker_times(audio_path, trans_path):
         prev = None
         startt = 0
         for info in data:
+            if len(info) != 4:
+                print info
+                continue
             sid,start,duration,_ = info
             if prev==sid:
                 continue
             else:
                 prev=sid
-                if sid in convos[fid]:
+                if fid in convos and sid in convos[fid]:
                     out[convos[fid][sid]].append((fid,startt,start))
                 startt = start
     return out
