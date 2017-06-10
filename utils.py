@@ -97,7 +97,7 @@ def desc2nppath(sid, sid_count, desc):
     """
     file_id, start, end = desc
     speech_file_name = 'cd01/swb1/sw0' + file_id + '.sph'
-    
+
     # rate, sig = wav.read(speech_file_name)
     if speech_file_name not in mfcc_cache:
         sig, rate, _ = frontend.io.read_sph(speech_file_name, 'f')
@@ -106,10 +106,10 @@ def desc2nppath(sid, sid_count, desc):
         mfcc_feat = np.array(mfcc(sig, rate, winlen=WIN_LEN, winstep=WIN_LEN))
         fbank_feat = np.array(logfbank(sig, rate, winlen=WIN_LEN, winstep=WIN_LEN))
         mfcc_cache[speech_file_name] = mfcc_feat
-        fbank_cache[speech_file_name] = fbank_feat 
+        fbank_cache[speech_file_name] = fbank_feat
     else:
-        mfcc_feat = mfcc_cache[speech_file_name] 
-        fbank_feat = fbank_cache[speech_file_name] 
+        mfcc_feat = mfcc_cache[speech_file_name]
+        fbank_feat = fbank_cache[speech_file_name]
 
     start_index = int(start / WIN_LEN)
     end_index = int(end / WIN_LEN)
@@ -120,7 +120,7 @@ def desc2nppath(sid, sid_count, desc):
     padded = np.zeros((64, 39))
     segment_length = mfcc_seg.shape[0]
     padded[ : segment_length, 0 : 13 ] = mfcc_seg
-    padded[ : segment_length, 13 : ] = fbank_seg 
+    padded[ : segment_length, 13 : ] = fbank_seg
 
     padded.dump(output_file)
     return output_file.split('/')[1], str(segment_length)
@@ -132,7 +132,7 @@ def poop(raw):
         out[sid] = chunk_times(descs)
 
     entries = []
-    
+
     sid_counts = defaultdict(int)
     for sid, descs in out.iteritems():
         for desc in descs:
